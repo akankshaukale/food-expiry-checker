@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Food Expiry Checker</title>
+
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: Arial, sans-serif; }
+    body { background: #f0f4f8; padding: 20px; color: #1a202c; }
+    .container { max-width: 1000px; margin: 0 auto; }
+    h1 { text-align: center; margin-bottom: 20px; color: #2d3748; }
+    .stats { display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; }
+    .stat { background: white; padding: 15px 20px; border-radius: 10px; flex: 1; min-width: 120px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+    .stat h2 { font-size: 28px; }
+    .stat p { color: #718096; font-size: 14px; }
+    .card { background: white; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    .card h2 { margin-bottom: 15px; font-size: 18px; }
+    .form-row { display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 15px; }
+    .form-group { flex: 1; min-width: 150px; }
+    .form-group label { display: block; margin-bottom: 5px; font-size: 13px; color: #4a5568; font-weight: bold; }
+    .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 14px; }
+    button { padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
+    .btn-add { background: #38a169; color: white; }
+    .btn-add:hover { background: #2f855a; }
+    .btn-edit { background: #4299e1; color: white; padding: 6px 12px; font-size: 13px; }
+    .btn-delete { background: #e53e3e; color: white; padding: 6px 12px; font-size: 13px; }
+    .toolbar { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
+    .toolbar input { padding: 8px 12px; border: 1px solid #cbd5e0; border-radius: 6px; flex: 1; min-width: 200px; }
+    .filter-btn { background: #edf2f7; color: #4a5568; padding: 8px 14px; }
+    .filter-btn.active { background: #38a169; color: white; }
+    table { width: 100%; border-collapse: collapse; }
+    th { background: #edf2f7; padding: 12px; text-align: left; font-size: 13px; color: #4a5568; }
+    td { padding: 12px; border-top: 1px solid #e2e8f0; font-size: 14px; }
+    .status { padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; }
+    .safe { background: #c6f6d5; color: #22543d; }
+    .near { background: #fefcbf; color: #744210; }
+    .expired { background: #fed7d7; color: #742a2a; }
+    .empty { text-align: center; padding: 40px; color: #a0aec0; }
+    .actions { display: flex; gap: 8px; }
+    .dashboard-cards {
+    display: flex;
+    gap: 15px;
+    margin: 20px 0;
+    flex-wrap: wrap;
+}
+
+.dashboard-card {
+    flex: 1;
+    min-width: 150px;
+    padding: 18px;
+    border-radius: 12px;
+    background: white;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+    text-align: center;
+}
+
+.dashboard-card strong {
+    display: block;
+    font-size: 16px;
+    margin-bottom: 8px;
+}
+
+.dashboard-card p {
+    font-size: 28px;
+    font-weight: bold;
+    margin: 0;
+    .dashboard-card:nth-child(1) {
+    border-top: 4px solid #333;
+}
+
+.dashboard-card:nth-child(2) {
+    border-top: 4px solid green;
+}
+
+.dashboard-card:nth-child(3) {
+    border-top: 4px solid orange;
+}
+
+.dashboard-card:nth-child(4) {
+    border-top: 4px solid red;
+}
+}
+  </style>
+  <link rel="manifest" href="manifest.json">
+</head>
+<body>
+  <div class="container">
+    <h1>🍎 Food Expiry Checker</h1>
+
+    <!-- Stats -->
+    <div class="stats">
+      <div class="stat">
+        <h2 id="total">0</h2>
+        <p>Total</p>
+      </div>
+      <div class="stat">
+        <h2 id="expired" style="color:#e53e3e">0</h2>
+        <p>Expired</p>
+      </div>
+      <div class="stat">
+        <h2 id="near" style="color:#d69e2e">0</h2>
+        <p>Near Expiry</p>
+      </div>
+      <div class="stat">
+        <h2 id="safe" style="color:#38a169">0</h2>
+        <p>Safe</p>
+      </div>
+    </div>
+
+    <!-- Add Form -->
+    <div class="card">
+      <h2>➕ Add New Item</h2>
+      <form id="addForm">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Food Name *</label>
+            <input type="text" id="name" placeholder="e.g. Milk" required>
+          </div>
+          <div class="form-group">
+            <label>Quantity *</label>
+            <input type="text" id="qty" placeholder="e.g. 1 Litre" required>
+          </div>
+          <div class="form-group">
+            <label>Expiry Date *</label>
+            <input type="date" id="expiry" required>
+          </div>
+          <div class="form-group">
+            <label>Category</label>
+            <select id="category">
+              <option>Dairy</option>
+              <option>Grains</option>
+              <option>Vegetables</option>
+              <option>Fruits</option>
+              <option>Other</option>
+            </select>
+          </div>
+        </div>
+        <button type="submit" class="btn-add">Add Item</button>
+      </form>
+    </div>
+
+    <!-- List -->
+    <div class="card">
+      <h2>📋 Inventory</h2>
+      <button onclick="clearAllItems()" style="margin: 10px 0; padding: 10px 15px;">
+    Clear All Items
+</button>
+      <div class="dashboard-cards">
+
+    <div class="dashboard-card">
+        <strong>Total Items</strong>
+        <p id="totalCount">0</p>
+    </div>
+
+    <div class="dashboard-card">
+        <strong>Safe</strong>
+        <p id="safeCount">0</p>
+    </div>
+
+    <div class="dashboard-card">
+        <strong>Near Expiry</strong>
+        <p id="nearCount">0</p>
+    </div>
+
+    <div class="dashboard-card">
+        <strong>Expired</strong>
+        <p id="expiredCount">0</p>
+    </div>
+
+</div>
+      <div style="display: flex; gap: 15px; margin: 20px 0; flex-wrap: wrap;">
+
+    <div>
+        <strong>Total Items</strong>
+        <p id="totalCount">0</p>
+    </div>
+
+    <div>
+        <strong>Safe</strong>
+        <p id="safeCount">0</p>
+    </div>
+
+    <div>
+        <strong>Near Expiry</strong>
+        <p id="nearCount">0</p>
+    </div>
+
+    <div>
+        <strong>Expired</strong>
+        <p id="expiredCount">0</p>
+    </div>
+
+</div>
+      <div class="toolbar">
+        <input type="text" id="search" placeholder="Search...">
+        <button class="filter-btn active" data-filter="all">All</button>
+        <button class="filter-btn" data-filter="expired">Expired</button>
+        <button class="filter-btn" data-filter="near">Near</button>
+        <button class="filter-btn" data-filter="safe">Safe</button>
+      </div>
+<div style="margin: 20px 0;">
+    <input
+        type="text"
+        id="searchInput"
+        placeholder="Search food item..."
+        oninput="searchText = this.value.toLowerCase(); render()"
+        style="padding: 10px; width: 250px;"
+    >
+</div>
+<div style="margin: 10px 0;">
+    <select id="filterSelect"
+        onchange="filter = this.value; render()"
+        style="padding: 10px; width: 250px;">
+
+        <option value="all">All Items</option>
+        <option value="safe">Safe</option>
+        <option value="near">Near Expiry</option>
+        <option value="expired">Expired</option>
+
+    </select>
+</div>
+      <table>
+        <thead>
+          <tr>
+            <th>Item</th>
+            <th>Qty</th>
+            <th>Expiry</th>
+            <th>Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="list"></tbody>
+      </table>
+      <div class="empty" id="empty" style="display:none;">No items found. Add something!</div>
+    </div>
+  </div>
+
+  <script>
+    let items = [];
+    let filter = 'all';
+    let searchText = '';
+
+    function getStatus(date) {
+      const today = new Date();
+      today.setHours(0,0,0,0);
+      const exp = new Date(date);
+      exp.setHours(0,0,0,0);
+      const days = Math.ceil((exp - today) / 86400000);
+
+      if (days < 0) return { type: 'expired', text: 'Expired', cls: 'expired' };
+      if (days <= 5) return { type: 'near', text: 'Near Expiry', cls: 'near' };
+      return { type: 'safe', text: 'Safe', cls: 'safe' };
+    }
+
+
+
+    function render() {
+        document.getElementById("totalCount").textContent = items.length;
+
+document.getElementById("safeCount").textContent =
+    items.filter(item => getStatus(item.expiry).type === "safe").length;
+
+document.getElementById("nearCount").textContent =
+    items.filter(item => getStatus(item.expiry).type === "near").length;
+
+document.getElementById("expiredCount").textContent =
+    items.filter(item => getStatus(item.expiry).type === "expired").length;
+      const list = document.getElementById('list');
+      const empty = document.getElementById('empty');
+
+      let filtered = items.filter(item => {
+        const st = getStatus(item.expiry);
+        const matchFilter = filter === 'all' || st.type === filter;
+        const matchSearch = !searchText || item.name.toLowerCase().includes(searchText);
+        return matchFilter && matchSearch;
+      });
+
+      // Sort expired first
+      filtered.sort((a,b) => {
+        const order = {expired:0, near:1, safe:2};
+        return order[getStatus(a.expiry).type] - order[getStatus(b.expiry).type];
+      });
+
+      if (filtered.length === 0) {
+        list.innerHTML = '';
+        empty.style.display = 'block';
+      } else {
+        empty.style.display = 'none';
+        list.innerHTML = filtered.map(item => {
+          const st = getStatus(item.expiry);
+          const d = new Date(item.expiry).toLocaleDateString('en-IN', {day:'2-digit', month:'short', year:'numeric'});
+       return `
+  <tr>
+    <td><strong>${item.name}</strong><br>
+      <small style="color:#718096">${item.category}</small>
+    </td>
+    <td>${item.qty}</td>
+    <td>${d}</td>
+    <td><span class="status ${st.cls}">${st.text}</span></td>
+    <td class="actions">
+        <button onclick="editItem('${item.id}')">Edit</button>
+      <button class="btn-delete" onclick="removeItem('${item.id}')">Delete</button>
+    </td>
+  </tr>
+`;
+        }).join('');
+      }
+
+      // Update stats
+      let total = items.length, exp = 0, near = 0, safe = 0;
+      items.forEach(i => {
+        const t = getStatus(i.expiry).type;
+        if (t === 'expired') exp++;
+        else if (t === 'near') near++;
+        else safe++;
+      });
+      document.getElementById('total').textContent = total;
+      document.getElementById('expired').textContent = exp;
+      document.getElementById('near').textContent = near;
+      document.getElementById('safe').textContent = safe;
+    }
+async function loadItems() {
+    try {
+        const response = await fetch('/api/items');
+
+        const data = await response.json();
+
+        console.log("Items from backend:", data);
+
+        items = data;
+
+        render();
+
+    } catch (error) {
+        console.error("Load items error:", error);
+        alert("Backend is not running.");
+    }
+}
+
+    // Add Item
+document.getElementById('addForm').onsubmit = async function(e) {
+    e.preventDefault();
+
+    const item = {
+        name: document.getElementById('name').value.trim(),
+        qty: document.getElementById('qty').value.trim(),
+        expiry: document.getElementById('expiry').value,
+        category: document.getElementById('category').value
+    };
+
+    try {
+        const response = await fetch('http://127.0.0.1:5000/api/items', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(item)
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            alert(data.error || 'Could not add item');
+            return;
+        }
+
+        alert('Item added successfully!');
+
+        this.reset();
+
+        loadItems();
+
+    } catch (error) {
+        console.error(error);
+        alert('Backend is not running.');
+    }
+};
+
+    // Delete
+  // Delete
+async function removeItem(id) {
+  if (confirm('Delete this item?')) {
+    try {
+      const response = await fetch(
+        `http://127.0.0.1:5000/api/items/${id}`,
+        {
+          method: 'DELETE'
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        alert(data.error || 'Could not delete item');
+        return;
+      }
+
+      alert('Item deleted successfully!');
+      loadItems();
+
+    } catch (error) {
+      console.error(error);
+      alert('Backend is not running.');
+    }
+  }
+}
+
+
+async function clearAllItems() {
+    if (!confirm("Are you sure you want to delete all items?")) {
+        return;
+    }
+
+    try {
+        const response = await fetch(
+            "http://127.0.0.1:5000/api/items",
+            {
+                method: "DELETE"
+            }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            alert(data.error || "Could not delete items");
+            return;
+        }
+
+        alert("All items deleted successfully!");
+        loadItems();
+
+    } catch (error) {
+        console.error(error);
+        alert("Backend is not running.");
+    }
+}
+async function editItem(id) {
+    const item = items.find(i => i.id == id);
+
+    if (!item) {
+        alert("Item not found");
+        return;
+    }
+
+    const name = prompt("Enter food name:", item.name);
+    if (name === null) return;
+
+    const qty = prompt("Enter quantity:", item.qty);
+    if (qty === null) return;
+
+    const expiry = prompt("Enter expiry date (YYYY-MM-DD):", item.expiry);
+    if (expiry === null) return;
+
+    const category = prompt("Enter category:", item.category);
+    if (category === null) return;
+
+    try {
+        const response = await fetch(
+            `http://127.0.0.1:5000/api/items/${id}`,
+            {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    name: name,
+                    qty: qty,
+                    expiry: expiry,
+                    category: category
+                })
+            }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            alert(data.error || "Could not update item");
+            return;
+        }
+
+        alert("Item updated successfully!");
+        loadItems();
+
+    } catch (error) {
+        console.error(error);
+        alert("Backend is not running.");
+    }
+}
+
+    // Filter buttons
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.onclick = function() {
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        filter = this.dataset.filter;
+        render();
+      };
+    });
+
+
+async function checkNotifications() {
+    try {
+        const response = await fetch(
+            'http://127.0.0.1:5000/api/notifications'
+        );
+
+        const notifications = await response.json();
+
+        if (notifications.length > 0) {
+            let message = "⚠️ Food Expiry Notification\n\n";
+
+            notifications.forEach(item => {
+                message += "🍎 " + item.message + "\n";
+            });
+
+            alert(message);
+        }
+
+    } catch (error) {
+        console.error("Notification error:", error);
+    }
+}
+
+  loadItems();
+checkNotifications();
+  </script>
+  <script>
+if ("serviceWorker" in navigator) {
+    window.addEventListener("load", function() {
+        navigator.serviceWorker.register("/service-worker.js")
+            .then(function() {
+                console.log("Service Worker registered");
+            })
+            .catch(function(error) {
+                console.error("Service Worker error:", error);
+            });
+    });
+}
+</script>
+</body>
+</html>
