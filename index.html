@@ -323,7 +323,7 @@ document.getElementById("expiredCount").textContent =
 async function loadItems() {
     try {
         const response = await fetch(
-            'http://127.0.0.1:5000/api/items'
+            '/api/items'
         );
 
         const data = await response.json();
