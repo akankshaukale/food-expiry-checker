@@ -177,27 +177,7 @@
         <button class="filter-btn" data-filter="near">Near</button>
         <button class="filter-btn" data-filter="safe">Safe</button>
       </div>
-<div style="margin: 20px 0;">
-    <input
-        type="text"
-        id="searchInput"
-        placeholder="Search food item..."
-        oninput="searchText = this.value.toLowerCase(); render()"
-        style="padding: 10px; width: 250px;"
-    >
-</div>
-<div style="margin: 10px 0;">
-    <select id="filterSelect"
-        onchange="filter = this.value; render()"
-        style="padding: 10px; width: 250px;">
 
-        <option value="all">All Items</option>
-        <option value="safe">Safe</option>
-        <option value="near">Near Expiry</option>
-        <option value="expired">Expired</option>
-
-    </select>
-</div>
       <table>
         <thead>
           <tr>
